@@ -1,4 +1,5 @@
 const BASE_URL = import.meta.env.VITE_API_URL ?? ''
+import { logger } from '@/utils/logger.js'
 
 function getHeaders(isJson = true) {
   const headers = {}
@@ -25,6 +26,10 @@ async function handleResponse(res) {
     } catch {}
     const error = new Error(message)
     error.status = res.status
+    logger.warn('apiClient.response', message, {
+      status: res.status,
+      url: res.url,
+    })
     throw error
   }
   const text = await res.text()
@@ -32,35 +37,55 @@ async function handleResponse(res) {
 }
 
 export async function get(path) {
-  const res = await fetch(`${BASE_URL}${path}`, {
-    method: 'GET',
-    headers: getHeaders(),
-  })
-  return handleResponse(res)
+  try {
+    const res = await fetch(`${BASE_URL}${path}`, {
+      method: 'GET',
+      headers: getHeaders(),
+    })
+    return handleResponse(res)
+  } catch (error) {
+    logger.error('apiClient.get', error, { path })
+    throw error
+  }
 }
 
 export async function post(path, body) {
-  const res = await fetch(`${BASE_URL}${path}`, {
-    method: 'POST',
-    headers: getHeaders(),
-    body: JSON.stringify(body),
-  })
-  return handleResponse(res)
+  try {
+    const res = await fetch(`${BASE_URL}${path}`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(body),
+    })
+    return handleResponse(res)
+  } catch (error) {
+    logger.error('apiClient.post', error, { path })
+    throw error
+  }
 }
 
 export async function put(path, body) {
-  const res = await fetch(`${BASE_URL}${path}`, {
-    method: 'PUT',
-    headers: getHeaders(),
-    body: JSON.stringify(body),
-  })
-  return handleResponse(res)
+  try {
+    const res = await fetch(`${BASE_URL}${path}`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify(body),
+    })
+    return handleResponse(res)
+  } catch (error) {
+    logger.error('apiClient.put', error, { path })
+    throw error
+  }
 }
 
 export async function del(path) {
-  const res = await fetch(`${BASE_URL}${path}`, {
-    method: 'DELETE',
-    headers: getHeaders(false),
-  })
-  return handleResponse(res)
+  try {
+    const res = await fetch(`${BASE_URL}${path}`, {
+      method: 'DELETE',
+      headers: getHeaders(false),
+    })
+    return handleResponse(res)
+  } catch (error) {
+    logger.error('apiClient.delete', error, { path })
+    throw error
+  }
 }

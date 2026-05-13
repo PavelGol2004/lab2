@@ -1,5 +1,6 @@
 import { ref } from 'vue'
 import { loginApi, registerApi } from '@/api/auth.js'
+import { logger } from '@/utils/logger.js'
 
 function parseJwt(token) {
   try {
@@ -52,6 +53,7 @@ function setToken(newToken) {
   const parsedUser = buildUser(newToken)
   user.value = parsedUser ? { ...parsedUser, ...(getStoredProfile() ?? {}) } : null
   localStorage.setItem('token', newToken)
+  logger.info('auth.setToken', 'Token saved to localStorage')
 }
 
 function clearToken() {
@@ -60,6 +62,7 @@ function clearToken() {
   user.value = null
   localStorage.removeItem('token')
   localStorage.removeItem('userProfile')
+  logger.info('auth.clearToken', 'Session data removed')
 }
 
 function updateProfile(profile) {
@@ -82,13 +85,23 @@ function updateProfile(profile) {
 
 export function useAuth() {
   async function login(email, password) {
-    const data = await loginApi(email, password)
-    setToken(data.jwtToken)
+    try {
+      const data = await loginApi(email, password)
+      setToken(data.jwtToken)
+    } catch (error) {
+      logger.error('auth.login', error, { email })
+      throw error
+    }
   }
 
   async function register(formData) {
-    const data = await registerApi(formData)
-    setToken(data.jwtToken)
+    try {
+      const data = await registerApi(formData)
+      setToken(data.jwtToken)
+    } catch (error) {
+      logger.error('auth.register', error, { email: formData?.email })
+      throw error
+    }
   }
 
   function logout(router) {

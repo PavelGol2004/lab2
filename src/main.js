@@ -3,6 +3,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import App from './App.vue'
 import './index.css'
 import { i18n } from './i18n.js'
+import { resolveRouteAccess } from './router/guards.js'
 
 import Index from './pages/Index.vue'
 import Login from './pages/Login.vue'
@@ -17,28 +18,6 @@ import AdminAudit from './pages/AdminAudit.vue'
 import Account from './pages/Account.vue'
 import Settings from './pages/Settings.vue'
 import NotFound from './pages/NotFound.vue'
-
-function getRoleFromToken(token) {
-  try {
-    const payload = token.split('.')[1]
-    if (!payload) return null
-    const base64 = payload.replace(/-/g, '+').replace(/_/g, '/')
-    const json = decodeURIComponent(
-      atob(base64)
-        .split('')
-        .map((c) => '%' + c.charCodeAt(0).toString(16).padStart(2, '0'))
-        .join('')
-    )
-    const claims = JSON.parse(json)
-    return (
-      claims.role ??
-      claims['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'] ??
-      null
-    )
-  } catch {
-    return null
-  }
-}
 
 const router = createRouter({
   history: createWebHistory(),
@@ -61,13 +40,8 @@ const router = createRouter({
 
 router.beforeEach((to) => {
   const token = localStorage.getItem('token')
-  if (to.meta.requiresAuth && !token) {
-    return '/login'
-  }
-  if (to.meta.roles?.length) {
-    const role = getRoleFromToken(token ?? '')
-    if (!role || !to.meta.roles.includes(role)) return '/'
-  }
+  const access = resolveRouteAccess(to, token)
+  if (access !== true) return access
 })
 
 const app = createApp(App)

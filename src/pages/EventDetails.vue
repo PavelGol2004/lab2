@@ -13,6 +13,7 @@ import { getEventReviews, addEventReview } from '@/api/reviews.js'
 import { getActiveQr } from '@/api/qr.js'
 import { useAuth } from '@/composables/useAuth.js'
 import { backendFeatures } from '@/api/compat.js'
+import { logger } from '@/utils/logger.js'
 import { Calendar, Clock, MapPin, DoorOpen, ArrowLeft } from 'lucide-vue-next'
 
 const route = useRoute()
@@ -70,6 +71,7 @@ async function load() {
       } catch {}
     }
   } catch {
+    logger.warn('eventDetails.load', 'Event not found or failed to load', { eventId: route.params.id })
     notFound.value = true
   } finally {
     loading.value = false
@@ -89,6 +91,7 @@ async function toggleRegistration() {
       toast.success(t('eventDetails.registered'))
     }
   } catch (e) {
+    logger.error('eventDetails.toggleRegistration', e, { eventId: route.params.id })
     toast.error(e.message)
   } finally {
     registering.value = false
@@ -131,6 +134,7 @@ async function attend(code = null) {
     scannerOpen.value = false
     toast.success(t('eventDetails.attended'))
   } catch (e) {
+    logger.error('eventDetails.attend', e, { eventId: route.params.id })
     toast.error(e.message)
   } finally {
     attending.value = false
@@ -154,6 +158,7 @@ async function loadActiveQr() {
       toast.error('Активный QR не найден')
     }
   } catch (e) {
+    logger.error('eventDetails.loadActiveQr', e, { eventId: route.params.id })
     toast.error(e.message)
   } finally {
     qrLoading.value = false
@@ -168,6 +173,7 @@ async function onDeleteEvent() {
     toast.success(t('eventDetails.eventDeleted'))
     router.push('/')
   } catch (e) {
+    logger.error('eventDetails.deleteEvent', e, { eventId: route.params.id })
     toast.error(e.message)
   }
 }
@@ -181,6 +187,7 @@ async function submitReview() {
     reviews.value = await getEventReviews(route.params.id)
     toast.success(t('eventDetails.reviewSaved'))
   } catch (e) {
+    logger.error('eventDetails.submitReview', e, { eventId: route.params.id })
     toast.error(e.message)
   }
 }
@@ -280,7 +287,7 @@ onMounted(load)
               <Button variant="outline" :disabled="attending" @click="scannerOpen = true">
                 {{ t('eventDetails.scanQr') }}
               </Button>
-              <Button :disabled="attending" @click="attend">
+              <Button :disabled="attending" @click="attend()">
                 {{ attending ? '...' : t('eventDetails.attend') }}
               </Button>
             </div>

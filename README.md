@@ -12,14 +12,16 @@
 - vee-validate + zod
 - vue-sonner
 
-## Запуск
+## Локальный запуск frontend
 
 ```sh
 npm i
 npm run dev
 ```
 
-## Локальный mock API (если backend недоступен)
+Frontend поднимается на `http://localhost:8080`.
+
+## Режим 1: mock API (автономная демонстрация)
 
 1. В отдельном терминале запустить mock:
 
@@ -33,7 +35,7 @@ npm run mock:api
 npm run dev
 ```
 
-По умолчанию для локальной разработки используется `.env.local`:
+`.env.local` для mock:
 
 ```env
 VITE_API_URL=http://localhost:3001
@@ -52,3 +54,47 @@ VITE_API_URL=http://localhost:3001
 Пример:
 
 - `POST http://localhost:3001/users/auth/login?mockStatus=401`
+
+## Режим 2: реальный backend
+
+Backend: [mirage-only/SmartEvent.Backend](https://github.com/mirage-only/SmartEvent.Backend.git)
+
+Минимальные варианты настройки `.env.local`:
+
+### Вариант A. Прямой запрос на API (если CORS уже настроен на backend)
+
+```env
+VITE_API_URL=http://localhost:5187
+```
+
+### Вариант B. Через Vite proxy (обход CORS в dev)
+
+```env
+VITE_API_URL=
+DEV_API_PROXY_TARGET=http://localhost:5187
+```
+
+В proxy-режиме браузер обращается к `localhost:8080`, а Vite пересылает запросы на backend.
+
+## Автотесты
+
+```sh
+npm run test
+```
+
+Что покрыто:
+- role-based route guard;
+- API client (`Authorization`, обработка `401`);
+- базовые auth-сценарии (`login/register/updateProfile`).
+
+## Release checklist
+
+Перед релизом выполнить:
+
+1. `npm ci`
+2. `npm run test`
+3. `npm run build`
+4. Проверить smoke-сценарии: login/register, список событий, регистрация, attendance, настройки, админ-экраны.
+5. Проверить окружение (`.env.local`) для выбранного режима (mock/real API).
+
+Дополнительно: см. `RELEASE_CHECKLIST_RU.md`.
